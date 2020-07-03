@@ -28,6 +28,17 @@ app.get('/api/persons', (req, res) => {
   res.json(entries)
 })
 
+app.get('/api/persons/:id', (req, res) => {
+  const id = Number(req.params.id)
+  const entry = entries.find(entry => entry.id === id)
+
+  if (entry) {
+    res.json(entry)
+  } else {
+    res.status(404).end()
+  }
+})
+
 app.get('/info', (req, res) => {
   const infoline = `Phonebook has info for ${entries.length} people`
   res.send(`<p>${infoline}</p><p>${new Date().toString()}</p>`)
