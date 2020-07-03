@@ -1,0 +1,19 @@
+{
+  "name": "phonebook_backend",
+  "version": "1.0.0",
+  "description": "Backend for the phonebook app of the fullstackopen.com course (part 3)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no tests specified\" && exit 1"
+  },
+  "author": "Frédéric Mercille",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
+  }
+}
