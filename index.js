@@ -1,7 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
+const Entry = require('./models/entry')
+const { response } = require('express')
 
 app.use(cors())
 app.use(express.json())
@@ -9,80 +12,62 @@ morgan.token('body', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 app.use(express.static('build'))
 
-let entries = [
-  {
-    "name": "Arto Hellas",
-    "number": "040-123456",
-    "id": 1
-  },
-  {
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523",
-    "id": 2
-  },
-  {
-    "name": "Dan Abramov",
-    "number": "12-43-234345",
-    "id": 3
-  },
-  {
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122",
-    "id": 4
-  }
-]
-
 app.get('/api/persons', (req, res) => {
-  res.json(entries)
+  Entry.find({}).then(entries => {
+    res.json(entries)
+  })
 })
 
 app.get('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const entry = entries.find(entry => entry.id === id)
-
-  if (entry) {
+  Entry.findById(req.params.id).then(entry => {
     res.json(entry)
-  } else {
-    res.status(404).end()
-  }
+  },
+    error => {
+      res.status(404).end()
+    })
 })
 
 app.post('/api/persons', (req, res) => {
   const name = req.body.name
   const number = req.body.number
-  const id = Math.ceil(Math.random() * 1e9)
 
   if (!name) {
     res.status(400).json({ 'error': 'name missing' }).end()
   } else if (!number) {
     res.status(400).json({ 'error': 'number missing' }).end()
   }
-  else if (entries.find(entry => entry.name.toLowerCase() === name.toLowerCase())) {
-    res.status(409).json({ 'error': 'name must be unique' }).end()
-  } else {
-    if (name && number) {
-      const newEntry = {
-        "name": name,
-        "number": number,
-        "id": id
-      }
-      entries.push(newEntry)
+  else {
+    Entry.findById(req.params.id).then(entry => {
+      console.log('Found', entry)
+      if (entry) {
+        res.status(409).json({ 'error': 'name must be unique' }).end()
+      } else {
+        if (name && number) {
+          const entry = new Entry({
+            name: name,
+            number: number
+          })
 
-      res.status(204).end()
-    }
+          entry.save().then(savedEntry => {
+            res.status(204).end()
+          })
+        }
+      }
+    })
   }
 })
 
-app.delete('/api/persons/:id', (req, res) => {
-  const id = Number(req.params.id)
-  entries = entries.filter(entry => entry.id !== id)
 
-  res.status(204).end()
+
+app.delete('/api/persons/:id', (req, res) => {
+  res.status(501).end()
 })
 
 app.get('/info', (req, res) => {
-  const infoline = `Phonebook has info for ${entries.length} people`
-  res.send(`<p>${infoline}</p><p>${new Date().toString()}</p>`)
+  const numEntries = Entry.find({}).then(entries => {
+    const infoline = `Phonebook has info for ${entries.length} people`
+    res.send(`<p>${infoline}</p><p>${new Date().toString()}</p>`)
+  })
 })
 
 const PORT = process.env.PORT || 3001
