@@ -36,7 +36,7 @@ app.put('/api/persons/:id', (req, res, next) => {
     number: req.body.number
   }
 
-  Entry.findByIdAndUpdate(req.params.id, entry, { new: true })
+  Entry.findByIdAndUpdate(req.params.id, entry, { new: true, runValidators: true })
     .then(updated => {
       if (updated) {
         res.json(updated)
@@ -47,7 +47,7 @@ app.put('/api/persons/:id', (req, res, next) => {
     .catch(error => next(error))
 })
 
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
   const name = req.body.name
   const number = req.body.number
 
@@ -68,16 +68,15 @@ app.post('/api/persons', (req, res) => {
             number: number
           })
 
-          entry.save().then(savedEntry => {
-            res.status(204).end()
-          })
+          entry.save()
+            .then(savedEntry => savedEntry.toJSON())
+            .then(savedEntry => res.json(savedEntry))
+            .catch(error => next(error))
         }
       }
     })
   }
 })
-
-
 
 app.delete('/api/persons/:id', (req, res, next) => {
   Entry.findByIdAndRemove(req.params.id)
@@ -104,6 +103,9 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'Malformed id' })
+  } else if (error.name === 'ValidationError') {
+    console.log('ValidationError')
+    return response.status(400).send({ error: error.message })
   }
 
   next(error)
