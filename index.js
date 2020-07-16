@@ -30,6 +30,23 @@ app.get('/api/persons/:id', (req, res, next) => {
     .catch(error => next(error))
 })
 
+app.put('/api/persons/:id', (req, res, next) => {
+  const entry = {
+    name: req.body.name,
+    number: req.body.number
+  }
+
+  Entry.findByIdAndUpdate(req.params.id, entry, { new: true })
+    .then(updated => {
+      if (updated) {
+        res.json(updated)
+      } else {
+        res.status(404).end()
+      }
+    })
+    .catch(error => next(error))
+})
+
 app.post('/api/persons', (req, res) => {
   const name = req.body.name
   const number = req.body.number
