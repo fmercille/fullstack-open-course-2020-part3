@@ -4,11 +4,10 @@ const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
 const Entry = require('./models/entry')
-const { response } = require('express')
 
 app.use(cors())
 app.use(express.json())
-morgan.token('body', function (req, res) { return JSON.stringify(req.body) })
+morgan.token('body', function (req) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 app.use(express.static('build'))
 
@@ -81,13 +80,17 @@ app.post('/api/persons', (req, res, next) => {
 app.delete('/api/persons/:id', (req, res, next) => {
   Entry.findByIdAndRemove(req.params.id)
     .then(result => {
-      res.status(204).end()
+      if (result) {
+        res.json(result)
+      } else {
+        res.status(204).end()
+      }
     })
     .catch(error => next(error))
 })
 
 app.get('/info', (req, res) => {
-  const numEntries = Entry.find({}).then(entries => {
+  Entry.find({}).then(entries => {
     const infoline = `Phonebook has info for ${entries.length} people`
     res.send(`<p>${infoline}</p><p>${new Date().toString()}</p>`)
   })
